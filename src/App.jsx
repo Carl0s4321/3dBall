@@ -1,11 +1,20 @@
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Plane, TorusKnot } from "@react-three/drei";
 import BlobBall from "./Ball";
+import { useRef } from "react";
 
 export default function App() {
+  const orbitCtrlRef = useRef();
+
+  function enableOrbitCtrls(isEnabled) {
+    console.log(`enableOrbitCtrls : ${isEnabled}`);
+    if (orbitCtrlRef.current) {
+      orbitCtrlRef.current.enabled = isEnabled;
+    }
+  }
+
   return (
     <Canvas
-      camera={{ position: [10, 0, -10], fov: 15 }}
       style={{ width: "100vw", height: "100vh", background: "#111" }}
     >
       <ambientLight intensity={0.2} />
@@ -27,7 +36,8 @@ export default function App() {
       />
 
       <Plane scale={10} rotation-x={-Math.PI / 2} position-y={-2} />
-      <BlobBall />
+      <BlobBall enableOrbitCtrls={enableOrbitCtrls} />
+      <OrbitControls ref={orbitCtrlRef} />
     </Canvas>
   );
 }
