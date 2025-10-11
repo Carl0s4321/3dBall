@@ -60,7 +60,7 @@ export default function BlobBall({ enableOrbitCtrls }) {
     decalMesh.renderOrder = decals.length;
     decals.push(decalMesh);
 
-    mesh.current.add(decalMesh);
+    mesh.current.attach(decalMesh);
     console.log(`ADDED ${index}`);
   }
 
@@ -137,14 +137,14 @@ export default function BlobBall({ enableOrbitCtrls }) {
     }
   }
 
-  // //   make it breathe
-  //   useFrame(({ clock }) => {
-  //     const t = clock.getElapsedTime();
-  //     mesh.current.scale.setScalar(1 + Math.sin(t * 3) * 0.005);
+  //   make it breathe
+    useFrame(({ clock }) => {
+    //   const t = clock.getElapsedTime();
+    //   mesh.current.scale.setScalar(1 + Math.sin(t * 3) * 0.005);
 
-  //     // mesh.current.rotation.y += 0.01;
-  //     // mesh.current.rotation.x += 0.005;
-  //   });
+      mesh.current.rotation.y += 0.001;
+    //   mesh.current.rotation.x += 0.005;
+    });
 
   return (
     <mesh
