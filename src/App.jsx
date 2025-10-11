@@ -16,15 +16,16 @@ export default function App() {
   return (
     <Canvas
       style={{ width: "100vw", height: "100vh", background: "#111" }}
+      camera={{ position: [0, 0, 4] }}
     >
       <ambientLight intensity={0.2} />
 
       {/* Light from top-left */}
-      {/* <directionalLight
+      <directionalLight
         position={[-2.3, 2, 3]}
         intensity={1}
         color="#ffffff"
-      /> */}
+      />
 
       <spotLight position={[-2.3, 2, 3]} intensity={1.5} color="#ffffff" />
 
@@ -35,7 +36,7 @@ export default function App() {
         color="#ffd6e0"
       />
 
-      <Plane scale={10} rotation-x={-Math.PI / 2} position-y={-2} />
+      {/* <Plane scale={10} rotation-x={-Math.PI / 2} position-y={-2} /> */}
       <BlobBall enableOrbitCtrls={enableOrbitCtrls} />
       <OrbitControls ref={orbitCtrlRef} />
     </Canvas>

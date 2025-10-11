@@ -11,7 +11,7 @@ export default function BlobBall({ enableOrbitCtrls }) {
   const { camera, scene } = useThree();
 
   // BALL
-  const geometry = useMemo(() => new THREE.SphereGeometry(1, 128, 128), []);
+  const geometry = useMemo(() => new THREE.SphereGeometry(2, 128, 128), []);
 
   const stickerTexLoader = new THREE.TextureLoader();
   const stickers = [
@@ -44,8 +44,8 @@ export default function BlobBall({ enableOrbitCtrls }) {
     orientation.copy(mouseHelper.rotation);
     orientation.z = Math.random() * 2 * Math.PI;
 
-    const minScale = 1;
-    const maxScale = 2;
+    const minScale = 0.1;
+    const maxScale = 0.5;
     const scale = minScale + Math.random() * (maxScale - minScale);
     size.setScalar(scale);
 
