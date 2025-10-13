@@ -23,29 +23,99 @@ export default function BlobBall({ enableOrbitCtrls }) {
     stickerTexLoader.load("/stickers/sticker6.webp"),
   ];
 
+  const wrinkleTex = new THREE.TextureLoader().load("/stickers/wrinkle.webp");
+
+  // const decalMat = new THREE.MeshStandardMaterial({
+  //   transparent: true,
+  //   depthTest: true,
+  //   polygonOffset: true,
+  //   polygonOffsetFactor: -4,
+  //   depthWrite: false,
+  // });
+
+  function createHoloShaderMat(stickerTexture, wrinkleTex) {
+    return new THREE.ShaderMaterial({
+      transparent: true,
+      depthTest: true,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -4,
+      uniforms: {
+        baseMap: { value: stickerTexture },
+        maskMap: { value: wrinkleTex },
+        // gonna update this each frame for the shine
+        cameraPos: { value: new THREE.Vector3() },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vWorldNormal;
+        varying vec3 vWorldPos;
+  
+        void main() {
+          vUv = uv;
+          vec4 worldPos = modelMatrix * vec4(position, 1.0);
+          vWorldPos = worldPos.xyz;
+          vWorldNormal = normalize(mat3(modelMatrix) * normal);
+          gl_Position = projectionMatrix * viewMatrix * worldPos;
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D baseMap;
+        uniform sampler2D maskMap;
+        uniform vec3 cameraPos;
+  
+        varying vec2 vUv;
+        varying vec3 vWorldNormal;
+        varying vec3 vWorldPos;
+  
+        void main() {
+          vec4 baseColor = texture2D(baseMap, vUv);
+          float mask = texture2D(maskMap, vUv).r;
+  
+          // getting view direction
+          vec3 viewDir = normalize(cameraPos - vWorldPos);
+  
+          // angle between normal and view direction
+          float fresnel = pow(1.0 - dot(viewDir, vWorldNormal), 3.0);
+  
+          // using that angle to create a rainbow
+          float angle = dot(normalize(vWorldNormal), normalize(vec3(0.0, 1.0, 0.5))) * 10.0;
+          vec3 rainbow = vec3(
+            0.5 + 0.5 * sin(angle),
+            0.5 + 0.5 * sin(angle + 2.094),
+            0.5 + 0.5 * sin(angle + 4.188)
+          );
+  
+          // combine base + rainbow for the wrinkles
+          vec3 color = mix(baseColor.rgb, rainbow * 1.6, mask * pow(fresnel, 0.7) * 1.2);
+
+          // extra glint maybe???
+          vec3 reflection = normalize(reflect(-viewDir, vWorldNormal));
+          float highlight = pow(max(dot(reflection, vec3(0.0, 0.0, 1.0)), 0.0), 10.0);
+          color += rainbow * highlight * 0.3;
+
+          gl_FragColor = vec4(color, baseColor.a);
+        }
+      `,
+    });
+  }
+
   const decals = [];
   const position = new THREE.Vector3();
   const orientation = new THREE.Euler();
   const size = new THREE.Vector3();
 
-  const decalMat = new THREE.MeshLambertMaterial({
-    transparent: true,
-    depthTest: true,
-    polygonOffset: true,
-    polygonOffsetFactor: -4,
-    depthWrite: false,
-  });
-
   function addSticker() {
-    const material = decalMat.clone();
     const index = Math.floor(Math.random() * stickers.length);
-    material.map = stickers[index];
-      position.copy(intersection.point);
+    const stickerTexture = stickers[index];
+    const material = createHoloShaderMat(stickerTexture, wrinkleTex);
+
+    position.copy(intersection.point);
     orientation.copy(mouseHelper.rotation);
     orientation.z = Math.random() * 2 * Math.PI;
 
-    const minScale = 0.1;
-    const maxScale = 0.5;
+    const minScale = 0.5;
+    const maxScale = 1;
     const scale = minScale + Math.random() * (maxScale - minScale);
     size.setScalar(scale);
 
@@ -61,7 +131,7 @@ export default function BlobBall({ enableOrbitCtrls }) {
     decals.push(decalMesh);
 
     mesh.current.attach(decalMesh);
-    console.log(`ADDED ${index}`);
+    // console.log(`ADDED ${index}`);
   }
 
   const raycaster = new THREE.Raycaster();
@@ -84,26 +154,26 @@ export default function BlobBall({ enableOrbitCtrls }) {
   //   const intersects = [];
 
   function handlePointerDown(event) {
-    console.log("POINTER DOWN");
+    // console.log("POINTER DOWN");
     mousePos.set(
       (event.clientX / window.innerWidth) * 2 - 1,
       -(event.clientY / window.innerHeight) * 2 + 1
     );
     handleRayCast();
     if (intersection.intersects) {
-      enableOrbitCtrls(false);
+      enableOrbitCtrls?.(false);
       addSticker();
       isPointerDown = true;
     }
   }
 
   function handlePointerUp(event) {
-    console.log("POINTER UP");
-    enableOrbitCtrls(true);
+    // console.log("POINTER UP");
+    enableOrbitCtrls?.(true);
     isPointerDown = false;
   }
   function handlePointerMove(event) {
-    console.log("POINTER MOVE");
+    // console.log("POINTER MOVE");
     mousePos.set(
       (event.clientX / window.innerWidth) * 2 - 1,
       -(event.clientY / window.innerHeight) * 2 + 1
@@ -137,14 +207,42 @@ export default function BlobBall({ enableOrbitCtrls }) {
     }
   }
 
-  //   make it breathe
-    useFrame(({ clock }) => {
-    //   const t = clock.getElapsedTime();
-    //   mesh.current.scale.setScalar(1 + Math.sin(t * 3) * 0.005);
+  const color = new THREE.Color();
 
-      mesh.current.rotation.y += 0.001;
-    //   mesh.current.rotation.x += 0.005;
-    });
+  useFrame(({ camera }) => {
+    for (const sticker of decals) {
+      // console.log(sticker)
+      if (sticker.material.uniforms.cameraPos) {
+        sticker.material.uniforms.cameraPos.value.copy(camera.position);
+      }
+    }
+  });
+
+  // useFrame((_, delta) => {
+  //   // loop through all decals to animate shimmer
+  //   mesh.current.children.forEach((child) => {
+  //     // console.log(child)
+  //     if (child.material?.uniforms?.time) {
+  //       child.material.uniforms.time.value += delta;
+  //     }
+  //   });
+  // });
+
+  // //   make it breathe
+  // useFrame(({ clock }) => {
+  //   const t = clock.getElapsedTime();
+  //   mesh.current.scale.setScalar(1 + Math.sin(t * 3) * 0.005);
+  //   const pulse = Math.abs(Math.sin(t));
+
+  //   mesh.current.rotation.y += 0.001;
+  //   mesh.current.position.y = Math.cos(t) * 0.2;
+
+  //   // console.log(t);
+  //   mesh.current.material.color.copy(
+  //     color.setRGB(0.05 * pulse, 0.01 * pulse, 0)
+  //   );
+  //   //   mesh.current.rotation.x += 0.005;
+  // });
 
   return (
     <mesh
@@ -154,7 +252,7 @@ export default function BlobBall({ enableOrbitCtrls }) {
       onPointerUp={handlePointerUp}
       onPointerMove={handlePointerMove}
     >
-      <meshBasicMaterial color={0x202020} wireframe={false} />
+      <meshPhongMaterial color={0x202020} wireframe={false} />
     </mesh>
   );
 }

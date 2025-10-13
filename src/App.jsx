@@ -1,9 +1,35 @@
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Plane } from "@react-three/drei";
+import { Environment, OrbitControls, useHelper } from "@react-three/drei";
 import BlobBall from "./Ball";
-import { useRef } from "react";
+import { Suspense, useRef } from "react";
+import * as THREE from "three";
+
 export default function App() {
   const orbitCtrlRef = useRef();
+
+  function Lights() {
+    const lightRef = useRef();
+
+    useHelper(lightRef, THREE.DirectionalLightHelper, 1, "red");
+
+    return (
+      <>
+        <ambientLight intensity={1.2} />
+
+        <directionalLight ref={lightRef} intensity={3} position={[-2, 4, -3]} />
+        <directionalLight
+          ref={lightRef}
+          intensity={2}
+          position={[200, -50, 10]}
+        />
+        <directionalLight
+          ref={lightRef}
+          intensity={0.3}
+          position={[-2, 4, 100]}
+        />
+      </>
+    );
+  }
 
   function enableOrbitCtrls(isEnabled) {
     console.log(`enableOrbitCtrls : ${isEnabled}`);
@@ -16,13 +42,17 @@ export default function App() {
       style={{ width: "100vw", height: "100vh", background: "#111" }}
       camera={{ position: [0, 0, 4] }}
     >
-      <ambientLight intensity={0.3} />
+      <Suspense>
+        <Lights />
+        <OrbitControls ref={orbitCtrlRef} enableRotate={true} />
+        <BlobBall />
 
-      <directionalLight intensity={1} position={[1, 5, 0]} />
-
-      {/* <Plane scale={10} rotation-x={-Math.PI / 2} position-y={-2} /> */}
-      <BlobBall enableOrbitCtrls={enableOrbitCtrls} />
-      <OrbitControls ref={orbitCtrlRef} />
+        <Environment
+          files={"/textures/env/studio_small_08_4k.exr"}
+          background={true}
+        />
+        {/* <BlobBall enableOrbitCtrls={enableOrbitCtrls} /> */}
+      </Suspense>
     </Canvas>
   );
 }
