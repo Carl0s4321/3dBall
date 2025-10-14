@@ -207,7 +207,7 @@ export default function BlobBall({ enableOrbitCtrls }) {
     }
   }
 
-  const color = new THREE.Color();
+    const color = new THREE.Color();
 
   useFrame(({ camera }) => {
     for (const sticker of decals) {
@@ -217,16 +217,6 @@ export default function BlobBall({ enableOrbitCtrls }) {
       }
     }
   });
-
-  // useFrame((_, delta) => {
-  //   // loop through all decals to animate shimmer
-  //   mesh.current.children.forEach((child) => {
-  //     // console.log(child)
-  //     if (child.material?.uniforms?.time) {
-  //       child.material.uniforms.time.value += delta;
-  //     }
-  //   });
-  // });
 
   // //   make it breathe
   // useFrame(({ clock }) => {
@@ -238,6 +228,7 @@ export default function BlobBall({ enableOrbitCtrls }) {
   //   mesh.current.position.y = Math.cos(t) * 0.2;
 
   //   // console.log(t);
+  // switching color black to orangey in a pulse
   //   mesh.current.material.color.copy(
   //     color.setRGB(0.05 * pulse, 0.01 * pulse, 0)
   //   );
