@@ -3,6 +3,7 @@ import { Environment, OrbitControls, useHelper } from "@react-three/drei";
 import BlobBall from "./Ball";
 import { Suspense, useRef } from "react";
 import * as THREE from "three";
+import Ball from "./components/Ball";
 
 export default function App() {
   const orbitCtrlRef = useRef();
@@ -43,15 +44,16 @@ export default function App() {
       camera={{ position: [0, 0, 4] }}
     >
       <Suspense>
-        <Lights />
+        {/* <Lights /> */}
         <OrbitControls ref={orbitCtrlRef} enableRotate={true} />
-        <BlobBall />
+        {/* <BlobBall /> */}
+
+        <Ball/>
 
         <Environment
           files={"/textures/env/studio_small_08_4k.exr"}
-          background={true}
+          background={false}
         />
-        {/* <BlobBall enableOrbitCtrls={enableOrbitCtrls} /> */}
       </Suspense>
     </Canvas>
   );
