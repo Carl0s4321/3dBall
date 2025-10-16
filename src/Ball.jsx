@@ -1,11 +1,11 @@
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import gsap from "gsap";
 
 import { DecalGeometry } from "three/examples/jsm/geometries/DecalGeometry.js";
 
-import { fragmentShader, vertexShader } from "./shaders/index"
+import { fragmentShader, vertexShader } from "./shaders/index";
 
 export default function BlobBall({ enableOrbitCtrls }) {
   const mesh = useRef();
@@ -96,7 +96,10 @@ export default function BlobBall({ enableOrbitCtrls }) {
     mouseHelperGeo,
     new THREE.MeshBasicMaterial()
   );
-  scene.add(mouseHelper);
+
+  useEffect(() => {
+    scene.add(mouseHelper);
+  }, []);
 
   const intersection = {
     intersects: false,
