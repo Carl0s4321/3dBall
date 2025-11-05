@@ -33,7 +33,7 @@ const App = () => {
     return (
         <Canvas camera={{position:[0,0,4]}} style={{ width: "100vw", height: "100vh", background: "#111" }}>
             <Lights />
-            <OrbitControls enableRotate={false} />
+            <OrbitControls enableRotate={true} />
             <Environment
                 files={"../src/assets/textures/env/studio_small_08_4k.exr"}
                 background={true}

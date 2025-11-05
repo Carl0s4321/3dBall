@@ -12,10 +12,19 @@ const Ball = () => {
   const [camActive, setCamActive] = useState(0);
   const basePosRef = useRef<THREE.Vector3>(new THREE.Vector3());
 
+  const texture = new THREE.TextureLoader().load(
+    "../src/assets/stickers/sticker1.webp"
+  );
+
   const uniforms = useMemo(() => {
     return {
+      baseColor: { value: new THREE.Color(0x202020) },
       uTime: { value: 0 },
       uDisp: { value: 0 },
+      map: {
+        value: texture,
+      },
+      projectorMatrix: { value: new THREE.Matrix4() }, // will update on click
     };
   }, []);
 
@@ -47,6 +56,8 @@ const Ball = () => {
     config: { tension: 200, friction: 10 },
   }));
 
+  //  really good tutorial to get point click projection
+  // https://www.youtube.com/watch?v=Zia-0PRgFPc
   const handleClick = (e) => {
     e.stopPropagation();
 
@@ -55,12 +66,40 @@ const Ball = () => {
       setActive(0);
     }, 500);
 
-    basePosRef.current.copy(camera.position);
+    basePosRef.current.copy(new THREE.Vector3(0, 0, 4));
 
+    // raycasted already
     const clickPoint = e.point.clone();
     setTarget(clickPoint);
     setCamActive(1);
     api.start({ zoom: 1 });
+
+    const normal = e.face?.normal.clone().transformDirection(mesh.current.matrixWorld);
+
+    // small offset backwards along normal (away from the surface)
+    const offset = normal.clone().multiplyScalar(.8);
+    const projPos = clickPoint.clone().add(offset);
+
+    console.log("clickPoint", clickPoint);
+
+    // make a new camera to project the texture from
+    const projector = new THREE.PerspectiveCamera(45, 1, 0.01, 3);
+    // copy the clickpoint position
+    projector.position.copy(projPos);
+    // aim it at the mesh center so the texture looks like its sticking to the mesh
+    projector.lookAt(clickPoint);
+
+    projector.updateMatrixWorld();
+    projector.updateProjectionMatrix();
+
+    // projectorMatrix = projection * view^-1
+    const projectorMatrix = new THREE.Matrix4().multiplyMatrices(
+      projector.projectionMatrix,
+      new THREE.Matrix4().copy(projector.matrixWorld).invert()
+    );
+
+    // update uniform
+    uniforms.projectorMatrix.value.copy(projectorMatrix);
   };
 
   // animate cam pos based on click direction
@@ -74,12 +113,12 @@ const Ball = () => {
       .normalize();
 
     // spring zoom
-    const zoomFactor = springs.zoom.get();
-    camera.position.lerpVectors(
-      basePos,
-      basePos.clone().add(direction.multiplyScalar(2.5)),
-      zoomFactor
-    );
+    // const zoomFactor = springs.zoom.get();
+    // camera.position.lerpVectors(
+    //   basePos,
+    //   basePos.clone().add(direction.multiplyScalar(2.5)),
+    //   zoomFactor
+    // );
   });
 
   return (
