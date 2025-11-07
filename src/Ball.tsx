@@ -113,12 +113,12 @@ const Ball = () => {
       .normalize();
 
     // spring zoom
-    // const zoomFactor = springs.zoom.get();
-    // camera.position.lerpVectors(
-    //   basePos,
-    //   basePos.clone().add(direction.multiplyScalar(2.5)),
-    //   zoomFactor
-    // );
+    const zoomFactor = springs.zoom.get();
+    camera.position.lerpVectors(
+      basePos,
+      basePos.clone().add(direction.multiplyScalar(2.5)),
+      zoomFactor
+    );
   });
 
   return (
